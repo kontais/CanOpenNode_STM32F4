@@ -249,6 +249,12 @@ CO_ReturnError_t CO_EE_init_1(
     /* read the CO_OD_ROM from EEPROM and verify CRC */
     
     ee->OD_EEPROMWriteEnable = true;
+    
+    printf("EEPROM used size = %d\n", OD_EEPROMSize);
+    if (OD_EEPROMSize > at24c16_size()) {
+        printf("ERROR! exceed EEPROM size(max.%d)\n", at24c16_size()); 
+        return CO_ERROR_ILLEGAL_ARGUMENT;
+    }
 
     return CO_ERROR_NO;
 }
@@ -272,7 +278,6 @@ void CO_EE_process(CO_EE_t *ee){
         /* if bytes in EEPROM and in RAM are different, then write to EEPROM */
         if(eeData != RAMdata){
             EE_writeByteNoWait(RAMdata, i);
-            printf("EEPROM[%d] wirete 0x%x\n", i, RAMdata);
         }
     }
 }
@@ -300,33 +305,6 @@ uint8_t EE_readByte(uint32_t address)
 void EE_writeByteNoWait(uint8_t data, uint32_t address)
 {
     at24c16_write_byte(address, data);
-}
-
-void EEPROM_clear(void)
-{
-    uint32_t address, size;
-
-    size    = at24c16_size();
-    address = 0;
-
-    while (address++ < size) {
-        at24c16_write_byte(address, 0x00);
-    }
-    printf("EEPROM_clear\n");
-}
-
-
-void EEPROM_store(void)
-{
-    uint32_t i;
-    uint8_t RAMdata;    
-
-    for (i = 0; i < ee.OD_EEPROMSize; i++) {
-        RAMdata = ee.OD_EEPROMAddress[i];
-        EE_writeByteNoWait(RAMdata, i);
-    }
-    
-    printf("EEPROM_store\n");
 }
 
 void CO_eepromRegisterODFunctions(CO_t* CO)

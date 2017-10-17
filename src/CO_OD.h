@@ -219,6 +219,12 @@ struct sCO_OD_RAM{
 struct sCO_OD_EEPROM{
                UNSIGNED32     FirstWord;
 
+/*1400[4]   */ OD_RPDOCommunicationParameter_t RPDOCommunicationParameter[4];
+/*1600[4]   */ OD_RPDOMappingParameter_t RPDOMappingParameter[4];
+/*1800[4]   */ OD_TPDOCommunicationParameter_t TPDOCommunicationParameter[4];
+/*1A00[4]   */ OD_TPDOMappingParameter_t TPDOMappingParameter[4];
+/*2101      */ UNSIGNED8      CANNodeID;
+/*2102      */ UNSIGNED16     CANBitRate;
 /*2106      */ UNSIGNED32     powerOnCounter;
 /*2112      */ INTEGER32      variableNVInt32[16];
 
@@ -245,13 +251,7 @@ struct sCO_OD_ROM{
 /*1019      */ UNSIGNED8      synchronousCounterOverflowValue;
 /*1029      */ UNSIGNED8      errorBehavior[6];
 /*1200[1]   */ OD_SDOServerParameter_t SDOServerParameter[1];
-/*1400[4]   */ OD_RPDOCommunicationParameter_t RPDOCommunicationParameter[4];
-/*1600[4]   */ OD_RPDOMappingParameter_t RPDOMappingParameter[4];
-/*1800[4]   */ OD_TPDOCommunicationParameter_t TPDOCommunicationParameter[4];
-/*1A00[4]   */ OD_TPDOMappingParameter_t TPDOMappingParameter[4];
 /*1F80      */ UNSIGNED32     NMTStartup;
-/*2101      */ UNSIGNED8      CANNodeID;
-/*2102      */ UNSIGNED16     CANBitRate;
 /*2111      */ INTEGER32      variableROMInt32[16];
 
                UNSIGNED32     LastWord;
@@ -346,16 +346,16 @@ extern struct sCO_OD_ROM CO_OD_ROM;
       #define OD_SDOServerParameter                      CO_OD_ROM.SDOServerParameter
 
 /*1400[4], Data Type: OD_RPDOCommunicationParameter_t, Array[4] */
-      #define OD_RPDOCommunicationParameter              CO_OD_ROM.RPDOCommunicationParameter
+      #define OD_RPDOCommunicationParameter              CO_OD_EEPROM.RPDOCommunicationParameter
 
 /*1600[4], Data Type: OD_RPDOMappingParameter_t, Array[4] */
-      #define OD_RPDOMappingParameter                    CO_OD_ROM.RPDOMappingParameter
+      #define OD_RPDOMappingParameter                    CO_OD_EEPROM.RPDOMappingParameter
 
 /*1800[4], Data Type: OD_TPDOCommunicationParameter_t, Array[4] */
-      #define OD_TPDOCommunicationParameter              CO_OD_ROM.TPDOCommunicationParameter
+      #define OD_TPDOCommunicationParameter              CO_OD_EEPROM.TPDOCommunicationParameter
 
 /*1A00[4], Data Type: OD_TPDOMappingParameter_t, Array[4] */
-      #define OD_TPDOMappingParameter                    CO_OD_ROM.TPDOMappingParameter
+      #define OD_TPDOMappingParameter                    CO_OD_EEPROM.TPDOMappingParameter
 
 /*1F80, Data Type: UNSIGNED32 */
       #define OD_NMTStartup                              CO_OD_ROM.NMTStartup
@@ -365,10 +365,10 @@ extern struct sCO_OD_ROM CO_OD_ROM;
       #define ODL_errorStatusBits_stringLength           10
 
 /*2101, Data Type: UNSIGNED8 */
-      #define OD_CANNodeID                               CO_OD_ROM.CANNodeID
+      #define OD_CANNodeID                               CO_OD_EEPROM.CANNodeID
 
 /*2102, Data Type: UNSIGNED16 */
-      #define OD_CANBitRate                              CO_OD_ROM.CANBitRate
+      #define OD_CANBitRate                              CO_OD_EEPROM.CANBitRate
 
 /*2103, Data Type: UNSIGNED16 */
       #define OD_SYNCCounter                             CO_OD_RAM.SYNCCounter

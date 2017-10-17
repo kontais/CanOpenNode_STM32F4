@@ -85,7 +85,6 @@ static uint32_t timer1msPrevious, timer1msCopy, timer1msDiff;
 int CO_main(void)
 {
     CO_ReturnError_t err;
-    
 
     switch (reset) {
         case CO_RESET_APP:
@@ -96,6 +95,7 @@ int CO_main(void)
 
             /* increase variable each startup. Variable is stored in EEPROM. */
             OD_powerOnCounter++;
+            printf("PowerOn count = %d\n", OD_powerOnCounter);
             reset = CO_RESET_COMM;
             break;
 
@@ -106,7 +106,7 @@ int CO_main(void)
             /* disable CAN and CAN interrupts */
 
             /* initialize CANopen */
-            err = CO_init((int32_t)CAN1/* CAN module address */, 9/* NodeID */, 125 /* bit rate */);
+            err = CO_init((int32_t)CAN1, OD_CANNodeID, OD_CANBitRate);
             if(err != CO_ERROR_NO) {
                 CO_errorReport(CO->em, CO_EM_MEMORY_ALLOCATION_ERROR, CO_EMC_SOFTWARE_INTERNAL, err);
                 while(1);
