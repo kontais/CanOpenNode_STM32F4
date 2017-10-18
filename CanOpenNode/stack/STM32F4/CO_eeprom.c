@@ -61,8 +61,7 @@
 #define PARAM_STORE_PASSWORD    0x65766173UL
 #define PARAM_RESTORE_PASSWORD  0x64616F6CUL
 
-#define PARA_AREA_MAIN      0
-#define PARA_AREA_DEFAULT   1
+#define EEPROM_CANOPEN_PARAM_ADDR      0x0UL
 
 CO_EE_t  ee;
 
@@ -87,23 +86,29 @@ enum CO_OD_H1011_RestoreDefaultParam_Sub
 };
 
 /**
- * Store parameters of object dictionary into flash memory.
- * \param[in] FlashAddress Use CO_OD_Flash_Adress for the normal parameter
- *                         block and CO_OD_Flash_Default_Param for the
- *                         default parameters
+ * Store default parameters of object dictionary into EEPROM.
  */
-static CO_SDO_abortCode_t storeParameters(CO_EE_t *pEE, uint8_t ParamArea, uint8_t ParametersSub)
+static CO_SDO_abortCode_t storeDefaultParameters(CO_EE_t *pEE, uint8_t ParametersSub)
 {
-    uint32_t Address;
     uint8_t err;
 
-    if (ParamArea == PARA_AREA_MAIN) {
-        Address = pEE->ParaOffsetMain;
-    } else {
-        Address = pEE->ParaOffsetDefault;
-    }
+    err = at24c16_write(EEPROM_CANOPEN_PARAM_ADDR, pEE->OD_EEPROMAddrRom, pEE->OD_EEPROMSize);
     
-    err = at24c16_write(Address, pEE->OD_EEPROMAddress, pEE->OD_EEPROMSize);
+    if (err) {
+        return CO_SDO_AB_HW;
+    }
+
+    return CO_SDO_AB_NONE;
+}
+
+/**
+ * Store parameters of object dictionary into EEPROM.
+ */
+static CO_SDO_abortCode_t storeParameters(CO_EE_t *pEE, uint8_t ParametersSub)
+{
+    uint8_t err;
+
+    err = at24c16_write(EEPROM_CANOPEN_PARAM_ADDR, pEE->OD_EEPROMAddrRam, pEE->OD_EEPROMSize);
     
     if (err) {
         return CO_SDO_AB_HW;
@@ -114,23 +119,13 @@ static CO_SDO_abortCode_t storeParameters(CO_EE_t *pEE, uint8_t ParamArea, uint8
 
 
 /**
- * Restore parameters of object dictionary from flash memory.
- * \param[in] FlashAddress Use CO_OD_Flash_Adress for the normal parameter
- *                         block and CO_OD_Flash_Default_Param for the
- *                         default parameters
+ * Restore parameters of object dictionary from EEPROM.
  */
-static CO_SDO_abortCode_t restoreParameters(CO_EE_t *pEE, uint8_t ParamArea, uint8_t ParametersSub)
+static CO_SDO_abortCode_t restoreParameters(CO_EE_t *pEE, uint8_t ParametersSub)
 {
-    uint32_t Address;
     uint8_t err;
 
-    if (ParamArea == PARA_AREA_MAIN) {
-        Address = pEE->ParaOffsetMain;
-    } else {
-        Address = pEE->ParaOffsetDefault;
-    }
-    
-    err = at24c16_read(Address, pEE->OD_EEPROMAddress, pEE->OD_EEPROMSize);
+    err = at24c16_read(EEPROM_CANOPEN_PARAM_ADDR, pEE->OD_EEPROMAddrRam, pEE->OD_EEPROMSize);
     
     if (err) {
         return CO_SDO_AB_HW;
@@ -159,8 +154,7 @@ static CO_SDO_abortCode_t CO_ODF_1010_StoreParam(CO_ODF_arg_t *ODF_arg)
 
         if(ODF_arg->subIndex == OD_H1010_STORE_PARAM_ALL){
             if(value == PARAM_STORE_PASSWORD){
-                /* write ee->OD_ROMAddress, ee->OD_ROMSize to eeprom (blocking function) */
-                ret = storeParameters(pEE, PARA_AREA_MAIN, ODF_arg->subIndex);
+                ret = storeParameters(pEE, ODF_arg->subIndex);
             }
             else{
                 ret = CO_SDO_AB_DATA_TRANSF;
@@ -192,13 +186,12 @@ static CO_SDO_abortCode_t CO_ODF_1011_RestoreParam(CO_ODF_arg_t *ODF_arg)
 
         if(ODF_arg->subIndex >= OD_H1011_RESTORE_PARAM_ALL){
             if(value == PARAM_RESTORE_PASSWORD){
-                ret = restoreParameters(pEE, PARA_AREA_DEFAULT, ODF_arg->subIndex);
+                ret = storeDefaultParameters(pEE, ODF_arg->subIndex);
                 if (ret != CO_SDO_AB_NONE) {
                     return ret;
                 }
-                ret = storeParameters(pEE, PARA_AREA_MAIN, OD_H1011_RESTORE_PARAM_ALL);
-            }
-            else{
+                ret = restoreParameters(pEE, OD_H1011_RESTORE_PARAM_ALL);
+            } else {
                 ret = CO_SDO_AB_DATA_TRANSF;
             }
         }
@@ -211,40 +204,34 @@ static CO_SDO_abortCode_t CO_ODF_1011_RestoreParam(CO_ODF_arg_t *ODF_arg)
 /******************************************************************************/
 CO_ReturnError_t CO_EE_init_1(
         CO_EE_t                *ee,
-        uint8_t                *OD_EEPROMAddress,
+        uint8_t                *OD_EEPROMAddrRam,
         uint32_t                OD_EEPROMSize,
-        uint8_t                *OD_ROMAddress,
-        uint32_t                OD_ROMSize)
+        uint8_t                *OD_EEPROMAddrRom)
 {
     uint32_t FirstWord, LastWord;
 
     /* verify arguments */
-    if(ee==NULL || OD_EEPROMAddress==NULL || OD_ROMAddress==NULL){
+    if(ee==NULL || OD_EEPROMAddrRam==NULL || OD_EEPROMAddrRom==NULL){
         return CO_ERROR_ILLEGAL_ARGUMENT;
     }
 
     /* Configure eeprom */
-    ee->ParaOffsetMain      = 0x00;     /* EEPROM保存数据 */
-    ee->ParaOffsetDefault   = 1024;     /* EEPROM默认数据保存地址 */
 
     /* configure object variables */
-    ee->OD_EEPROMAddress = OD_EEPROMAddress;
-    ee->OD_EEPROMSize = OD_EEPROMSize;
-    ee->OD_ROMAddress = OD_ROMAddress;
-    ee->OD_ROMSize = OD_ROMSize;
+    ee->OD_EEPROMAddrRam = OD_EEPROMAddrRam;
+    ee->OD_EEPROMSize    = OD_EEPROMSize;
+    ee->OD_EEPROMAddrRom = OD_EEPROMAddrRom;
     ee->OD_EEPROMCurrentIndex = 0U;
     ee->OD_EEPROMWriteEnable = false;
 
     /* read the CO_OD_EEPROM from EEPROM, first verify, if data are OK */
-    at24c16_read(ee->ParaOffsetDefault, (uint8_t*)&FirstWord, 4);
-    at24c16_read(ee->ParaOffsetDefault + ee->OD_EEPROMSize - 4, (uint8_t*)&LastWord, 4);    
+    at24c16_read(EEPROM_CANOPEN_PARAM_ADDR, (uint8_t*)&FirstWord, 4);
+    at24c16_read(EEPROM_CANOPEN_PARAM_ADDR + ee->OD_EEPROMSize - 4, (uint8_t*)&LastWord, 4);
     if ((FirstWord != CO_OD_FIRST_LAST_WORD)
       ||(LastWord != CO_OD_FIRST_LAST_WORD)) {
-        storeParameters(ee, PARA_AREA_MAIN, OD_H1010_STORE_PARAM_ALL);
-        storeParameters(ee, PARA_AREA_DEFAULT, OD_H1010_STORE_PARAM_ALL);
-    } else {
-        restoreParameters(ee, PARA_AREA_MAIN, OD_H1010_STORE_PARAM_ALL);
+        storeDefaultParameters(ee, OD_H1010_STORE_PARAM_ALL);
     }
+    restoreParameters(ee, OD_H1010_STORE_PARAM_ALL);
 
     /* read the CO_OD_ROM from EEPROM and verify CRC */
     
@@ -272,12 +259,12 @@ void CO_EE_process(CO_EE_t *ee){
         i = ee->OD_EEPROMCurrentIndex;
 
         /* read eeprom */
-        RAMdata = ee->OD_EEPROMAddress[i];
-        eeData = EE_readByte(i);
+        RAMdata = ee->OD_EEPROMAddrRam[i];
+        eeData = EEPROM_readByte(i);
 
         /* if bytes in EEPROM and in RAM are different, then write to EEPROM */
         if(eeData != RAMdata){
-            EE_writeByteNoWait(RAMdata, i);
+            EEPROM_writeByteNoWait(RAMdata, i);
         }
     }
 }
@@ -289,11 +276,10 @@ void EEPROM_init(void)
     CO_EE_init_1(&ee,
         (uint8_t*)&CO_OD_EEPROM,
         sizeof(CO_OD_EEPROM),
-        (uint8_t*)&CO_OD_ROM,
-        sizeof(CO_OD_ROM));
+        (uint8_t*)&CO_OD_EEPROM_ROM);
 }
 
-uint8_t EE_readByte(uint32_t address)
+uint8_t EEPROM_readByte(uint32_t address)
 {
     uint8_t data;
 
@@ -302,9 +288,23 @@ uint8_t EE_readByte(uint32_t address)
     return data;
 }
 
-void EE_writeByteNoWait(uint8_t data, uint32_t address)
+void EEPROM_writeByteNoWait(uint8_t data, uint32_t address)
 {
     at24c16_write_byte(address, data);
+}
+
+void EEPROM_clear(void)
+{
+    int i;
+    uint8_t buf[16];
+
+    for (i = 0; i < 16; i ++) {
+        buf[i] = 0;
+    }
+    
+    for (i = 0; i < 2048; i += 16) {
+        at24c16_write_page(i, buf, 16);
+    }
 }
 
 void CO_eepromRegisterODFunctions(CO_t* CO)

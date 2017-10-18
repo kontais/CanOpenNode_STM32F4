@@ -10,6 +10,7 @@
 #define _AT24C16_H_
 
 uint8_t at24c16_write(uint32_t address, uint8_t *buffer, uint32_t length);
+uint8_t at24c16_write_page(uint32_t address, uint8_t *buffer, uint32_t length);
 uint8_t at24c16_read(uint32_t address, uint8_t *buffer, uint32_t length);
 uint8_t at24c16_write_byte(uint32_t address, uint8_t value);
 uint32_t at24c16_size(void);

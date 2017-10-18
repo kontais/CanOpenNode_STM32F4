@@ -87,7 +87,9 @@ struct sCO_OD_RAM CO_OD_RAM = {
 
 
 /***** Definition for EEPROM variables ****************************************/
-struct sCO_OD_EEPROM CO_OD_EEPROM = {
+struct sCO_OD_EEPROM CO_OD_EEPROM;
+
+const struct sCO_OD_EEPROM CO_OD_EEPROM_ROM = {
            CO_OD_FIRST_LAST_WORD,
 /*1400*/{{0x2, 0x200L, 0xFF},
 /*1401*/ {0x2, 0x300L, 0xFE},

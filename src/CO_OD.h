@@ -262,6 +262,7 @@ struct sCO_OD_ROM{
 extern struct sCO_OD_RAM CO_OD_RAM;
 
 extern struct sCO_OD_EEPROM CO_OD_EEPROM;
+extern const struct sCO_OD_EEPROM CO_OD_EEPROM_ROM;
 
 extern struct sCO_OD_ROM CO_OD_ROM;
 

@@ -113,6 +113,10 @@ uint8_t at24c16_write_page(uint32_t address, uint8_t *buffer, uint32_t length)
     word_address  = (uint8_t)(address & 0xff);           // 8bit rows
     slave_address = AT24C16_SLAVE_ID | (page_select << 1);
 
+    if (length == 0) {
+        return 0;
+    }
+
     // START
     I2C_GenerateSTART(I2C1, ENABLE);
 
@@ -158,6 +162,10 @@ uint8_t at24c16_read(uint32_t address, uint8_t *buffer, uint32_t length)
     page_select   = (uint8_t)((address >> 8) & 0x7);     // 3bit segments
     word_address  = (uint8_t)(address & 0xff);           // 8bit rows
     slave_address = AT24C16_SLAVE_ID | (page_select << 1);
+
+    if (length == 0) {
+        return 0;
+    }
 
     i = 0;
     while(I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY)) {  // Busy Check

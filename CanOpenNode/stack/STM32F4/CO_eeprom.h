@@ -66,12 +66,9 @@ extern "C" {
  * Eeprom object.
  */
 typedef struct{
-    uint32_t    ParaOffsetMain;         /**< Parameters offset in EEPROM */
-    uint32_t    ParaOffsetDefault;      /**< Default Parameters offset in EEPROM */
-    uint8_t     *OD_EEPROMAddress;      /**< From CO_EE_init_1() */
+    uint8_t     *OD_EEPROMAddrRam;      /**< CO_OD_EEPROM RAM Address */
     uint32_t     OD_EEPROMSize;         /**< From CO_EE_init_1() */
-    uint8_t     *OD_ROMAddress;         /**< not use */
-    uint32_t     OD_ROMSize;            /**< not use */
+    uint8_t     *OD_EEPROMAddrRom;      /**< CO_OD_EEPROM ROM Address */
     uint32_t     OD_EEPROMCurrentIndex; /**< Internal variable controls the OD_EEPROM vrite */
     bool_t       OD_EEPROMWriteEnable;  /**< Writing to EEPROM is enabled */
 }CO_EE_t;
@@ -91,10 +88,9 @@ typedef struct{
  */
 CO_ReturnError_t CO_EE_init_1(
         CO_EE_t                *ee,
-        uint8_t                *OD_EEPROMAddress,
+        uint8_t                *OD_EEPROMAddrRam,
         uint32_t                OD_EEPROMSize,
-        uint8_t                *OD_ROMAddress,
-        uint32_t                OD_ROMSize);
+        uint8_t                *OD_EEPROMAddrRom);
 
 
 /**
@@ -131,10 +127,9 @@ void CO_EE_process(CO_EE_t *ee);
 extern CO_EE_t  ee;
 
 void EEPROM_init(void);
-uint8_t EE_readByte(uint32_t address);
-void EE_writeByteNoWait(uint8_t data, uint32_t address);
+uint8_t EEPROM_readByte(uint32_t address);
+void EEPROM_writeByteNoWait(uint8_t data, uint32_t address);
 void EEPROM_clear(void);
-void EEPROM_store(void);
 
 #ifdef __cplusplus
 }
